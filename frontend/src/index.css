@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink text-body font-sans antialiased;
+    background-image:
+      radial-gradient(900px 500px at 80% -10%, rgba(91, 156, 147, 0.08), transparent),
+      radial-gradient(700px 400px at 0% 0%, rgba(202, 168, 106, 0.05), transparent);
+    background-attachment: fixed;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-surface/80 shadow-soft backdrop-blur-sm;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium
+      transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-ink hover:bg-primary-soft shadow-glow;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-surface-2/60 text-body hover:border-primary/60 hover:text-white;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface-2/60 px-3.5 py-2.5 text-sm text-body
+      placeholder:text-muted/60 outline-none transition focus:border-primary/70
+      focus:ring-2 focus:ring-primary/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2/60
+      px-3 py-1 text-xs font-medium text-muted;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3342;
+  border-radius: 999px;
+  border: 2px solid #10141b;
+}
+
+/* Print styles for PDF export of the report */
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    border-color: #ddd !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .print-text-dark,
+  .print-text-dark * {
+    color: #111 !important;
+  }
+}
