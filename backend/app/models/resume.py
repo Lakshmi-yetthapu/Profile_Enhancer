@@ -19,6 +19,8 @@ class Resume(Base):
     source_type: Mapped[str] = mapped_column(String(20), nullable=False)  # pdf | drive | link
     source_ref: Mapped[str] = mapped_column(Text, nullable=False)  # file path or URL
     original_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # external student/candidate identifier (used by bulk analysis from a sheet)
+    candidate_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     extracted_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
     # cached embedding of the resume text, used for semantic ranking against JDs
     embedding: Mapped[list | None] = mapped_column(JSONB, nullable=True)

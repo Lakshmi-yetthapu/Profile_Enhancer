@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Briefcase, FileCheck2, History, LayoutGrid, ListChecks, LogOut, Shield, Wand2 } from "lucide-react";
+import { Briefcase, FileCheck2, History, LayoutGrid, ListChecks, LogOut, Shield, Table2, Wand2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 function NavItem({ to, icon: Icon, label }: { to: string; icon: typeof LayoutGrid; label: string }) {
@@ -45,6 +45,7 @@ export default function Layout() {
           <NavItem to="/builder" icon={Wand2} label="Resume Builder" />
           <NavItem to="/jobs" icon={Briefcase} label="Job Descriptions" />
           <NavItem to="/history" icon={History} label="History" />
+          {user?.role === "admin" && <NavItem to="/bulk" icon={Table2} label="Bulk Analysis" />}
           {user?.role === "admin" && <NavItem to="/screening" icon={ListChecks} label="Screening" />}
           {user?.role === "admin" && <NavItem to="/admin" icon={Shield} label="Admin Rubric" />}
         </nav>

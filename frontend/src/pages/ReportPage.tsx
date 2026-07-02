@@ -461,7 +461,7 @@ export default function ReportPage() {
                   {c.name}
                   {c.issuer ? <span className="text-muted"> · {c.issuer}</span> : null}
                 </span>
-                {c.is_nxtwave_course && <span className="chip text-warn">Not counted (NxtWave)</span>}
+                {c.is_nxtwave_course && <span className="chip text-muted">Internal · NxtWave</span>}
               </li>
             ))}
           </ul>

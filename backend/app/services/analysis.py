@@ -92,6 +92,11 @@ def _ground_project_links(result: dict) -> None:
         if c.get("key") == "project_links_present":
             c["passed"] = both == total
             c["score"] = round(100 * both / total) if total else 0
+            c["statement"] = (
+                "Every project has a GitHub and a deployed link"
+                if both == total
+                else "Some projects are missing a GitHub or deployed link"
+            )
             c["comment"] = (
                 "Every project includes both a GitHub and a deployed link."
                 if both == total
@@ -99,6 +104,52 @@ def _ground_project_links(result: dict) -> None:
             )
             c["evidence"] = None
             break
+
+
+def _clean_coding_profiles(result: dict) -> None:
+    """GitHub is code hosting, not a coding profile — drop it from coding_profiles."""
+    profiles = result.get("coding_profiles") or []
+    result["coding_profiles"] = [
+        p
+        for p in profiles
+        if "github" not in ((p.get("url") or "") + (p.get("platform") or "")).lower()
+    ]
+
+
+def _extra_improvements(result: dict) -> None:
+    """Certification and GitHub-activity coaching points."""
+    improvements = result.setdefault("improvements", [])
+
+    # Certifications: NxtWave/internal certs are allowed, but an EXTERNAL cert is expected.
+    certs = result.get("certifications") or []
+    has_external = any(not c.get("is_nxtwave_course") for c in certs)
+    if not has_external:
+        improvements.append(
+            {
+                "priority": "medium",
+                "text": (
+                    "Certifications: add at least one external/industry certification (e.g. cloud, "
+                    "a framework, or a recognized course). Internal NxtWave certificates alone are "
+                    "not enough — earn an external one."
+                ),
+            }
+        )
+
+    # GitHub activity: few original repos -> build more projects.
+    gh = result.get("github") or {}
+    if gh:
+        original = gh.get("original_repos", 0)
+        if original < 3:
+            improvements.append(
+                {
+                    "priority": "medium",
+                    "text": (
+                        f"Your GitHub has only {original} original project repositor"
+                        f"{'y' if original == 1 else 'ies'} — build and publish more projects to "
+                        "demonstrate your skills."
+                    ),
+                }
+            )
 
 
 def _enrich_leetcode(result: dict, resume_text: str) -> None:
@@ -159,7 +210,8 @@ def _compute_score_and_verdict(
         rows.append(
             {
                 "criterion_key": key,
-                "title": crit.title,
+                # dynamic finding statement as the heading; fall back to the static rule title
+                "title": (item.get("statement") or "").strip() or crit.title,
                 "passed": passed,
                 "score": score,
                 "severity": item.get("severity", "info"),
@@ -390,6 +442,10 @@ def run_analysis(
 
     # Authenticity / quality / plagiarism enrichments.
     _screening_enrichments(db, resume, llm_result)
+
+    # GitHub is not a coding profile; add certification & GitHub-activity coaching.
+    _clean_coding_profiles(llm_result)
+    _extra_improvements(llm_result)
 
     jd_fit_score: float | None = None
     if jd is not None:

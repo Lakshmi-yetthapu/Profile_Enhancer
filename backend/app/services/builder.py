@@ -22,6 +22,7 @@ _OUTPUT_CONTRACT = """
 Return a JSON object with EXACTLY this shape:
 
 {
+  "headline": "<short professional title tailored to the target role, e.g. 'Full-Stack Developer'>",
   "summary": "<2-3 line professional summary tailored to the JD, using only real facts>",
   "skills": { "<category>": ["skill", ...] },
   "projects": [

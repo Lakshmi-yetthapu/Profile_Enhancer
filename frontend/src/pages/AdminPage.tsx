@@ -97,8 +97,40 @@ function SettingsEditor() {
         Auto-reject resumes with hidden / white-text keyword stuffing
       </label>
 
+      <div className="border-t border-line pt-5">
+        <div className="mb-1 text-sm font-medium text-body">Mistral key rotation</div>
+        <p className="mb-3 text-xs text-muted">
+          {settings.mistral_keys_loaded ?? "0"} Mistral key(s) detected in the environment.
+          Add more via <span className="text-body">MISTRAL_API_KEYS</span> in <span className="text-body">.env</span>.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label>
+            <span className="label">Active keys (0 = use all)</span>
+            <input
+              type="number"
+              min={0}
+              className="input"
+              value={settings.mistral_active_keys ?? "0"}
+              onChange={(e) => setSettings({ ...settings, mistral_active_keys: e.target.value })}
+            />
+          </label>
+          <label>
+            <span className="label">Rotation mode</span>
+            <select
+              className="input"
+              value={settings.key_rotation_mode ?? "round_robin"}
+              onChange={(e) => setSettings({ ...settings, key_rotation_mode: e.target.value })}
+            >
+              <option value="round_robin">Round-robin (spread load)</option>
+              <option value="failover">Failover only (switch on error)</option>
+              <option value="single">Single key</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
-        <button onClick={save} className="btn-primary"><Save size={16} /> Save thresholds</button>
+        <button onClick={save} className="btn-primary"><Save size={16} /> Save settings</button>
         {saved && <span className="text-sm text-good">Saved</span>}
       </div>
     </div>

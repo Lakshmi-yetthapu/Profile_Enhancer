@@ -10,19 +10,32 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user, require_admin
-from app.models import Analysis, Resume, User
+from app.models import Analysis, BulkBatch, JobDescription, Resume, User
 from app.schemas import (
     AnalysisOut,
     AnalyzeRequest,
+    BatchListItem,
+    BatchOut,
+    BulkEmailRequest,
+    BulkEmailResponse,
+    BulkEmailResultItem,
+    BulkRequest,
+    BulkResponse,
+    BulkResultItem,
     EmailShareRequest,
     EmailShareResponse,
     ReviewUpdate,
     ScreeningItem,
 )
+from app.services import ingestion
+from app.services import jd as jd_service
 from app.services.analysis import run_analysis
-from app.services.email import detect_candidate_email, send_report_email
+from app.services.email import detect_candidate_email, detect_candidate_name, send_report_email
+from app.services.llm import get_provider
 
 router = APIRouter(prefix="/api/analyses", tags=["analyses"])
+
+_BULK_MAX = 100
 
 
 def _owned_resume(db: Session, resume_id: int, user: User) -> Resume:
@@ -48,6 +61,8 @@ def _attach_computed(db: Session, analysis: Analysis) -> Analysis:
     if resume:
         owner = db.get(User, resume.user_id)
         analysis.candidate_email = detect_candidate_email(resume, owner.email if owner else None)
+        analysis.candidate_name = detect_candidate_name(resume)
+        analysis.candidate_ref = resume.candidate_ref
         prev = db.scalars(
             select(Analysis)
             .join(Resume, Resume.id == Analysis.resume_id)
@@ -78,6 +93,135 @@ def analyze(
         bias_safe=payload.bias_safe,
     )
     return _attach_computed(db, analysis)
+
+
+@router.post("/bulk", response_model=BulkResponse)
+def bulk_analyze(
+    payload: BulkRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> BulkResponse:
+    """Analyze many resumes at once (Student ID + resume link per row). Each row produces
+    its own persisted report; failures are isolated so one bad row doesn't stop the batch."""
+    items = payload.items[:_BULK_MAX]
+
+    # If a JD is supplied, parse/embed it once and reuse for the whole batch.
+    jd: JobDescription | None = None
+    if payload.jd_text:
+        jd = jd_service.parse_and_store(db, admin.id, payload.jd_text, None, None, payload.provider)
+
+    results: list[BulkResultItem] = []
+    for item in items:
+        ext = (item.external_id or "").strip()
+        link = (item.resume_link or "").strip()
+        if not link:
+            results.append(BulkResultItem(external_id=ext, resume_link=link, error="Missing resume link"))
+            continue
+        try:
+            if "drive.google.com" in link.lower():
+                text, meta = ingestion.text_from_drive(link)
+                stype = "drive"
+            else:
+                text, meta = ingestion.text_from_link(link)
+                stype = "link"
+            if not text.strip():
+                raise ValueError("No readable text extracted from the link")
+
+            resume = Resume(
+                user_id=admin.id,
+                source_type=stype,
+                source_ref=link,
+                extracted_text=text,
+                ingest_meta=meta,
+                candidate_ref=ext,
+            )
+            db.add(resume)
+            db.commit()
+            db.refresh(resume)
+
+            # Best-effort embed so cross-resume plagiarism works within the batch.
+            try:
+                jd_service.ensure_resume_embedding(db, resume, get_provider(None))
+            except Exception:
+                pass
+
+            analysis = run_analysis(
+                db,
+                resume=resume,
+                mode="jd" if jd else "no_jd",
+                jd_text=None,
+                provider_name=payload.provider,
+                job_description_id=jd.id if jd else None,
+            )
+            results.append(
+                BulkResultItem(
+                    external_id=ext,
+                    resume_link=link,
+                    analysis_id=analysis.id,
+                    overall_score=analysis.overall_score,
+                    jd_fit_score=analysis.jd_fit_score,
+                    verdict=analysis.verdict,
+                    report_path=f"/report/{analysis.id}",
+                )
+            )
+        except HTTPException as exc:
+            db.rollback()
+            results.append(BulkResultItem(external_id=ext, resume_link=link, error=str(exc.detail)[:200]))
+        except Exception as exc:  # noqa: BLE001 - isolate per-row failures
+            db.rollback()
+            results.append(BulkResultItem(external_id=ext, resume_link=link, error=str(exc)[:200]))
+
+    # Persist the batch and keep only the last 5 per admin.
+    batch = BulkBatch(
+        user_id=admin.id,
+        title=f"Batch of {len(results)}",
+        jd_text=payload.jd_text,
+        provider=payload.provider or "mistral",
+        item_count=len(results),
+        results_json=[r.model_dump() for r in results],
+    )
+    db.add(batch)
+    db.commit()
+    db.refresh(batch)
+
+    old = list(
+        db.scalars(
+            select(BulkBatch)
+            .where(BulkBatch.user_id == admin.id)
+            .order_by(BulkBatch.created_at.desc())
+            .offset(5)
+        )
+    )
+    for b in old:
+        db.delete(b)
+    if old:
+        db.commit()
+
+    return BulkResponse(batch_id=batch.id, results=results)
+
+
+@router.get("/batches", response_model=list[BatchListItem])
+def list_batches(
+    db: Session = Depends(get_db), admin: User = Depends(require_admin)
+) -> list[BulkBatch]:
+    return list(
+        db.scalars(
+            select(BulkBatch)
+            .where(BulkBatch.user_id == admin.id)
+            .order_by(BulkBatch.created_at.desc())
+            .limit(5)
+        )
+    )
+
+
+@router.get("/batches/{batch_id}", response_model=BatchOut)
+def get_batch(
+    batch_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)
+) -> BulkBatch:
+    batch = db.get(BulkBatch, batch_id)
+    if not batch or batch.user_id != admin.id:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    return batch
 
 
 @router.get("/screening", response_model=list[ScreeningItem])
@@ -204,6 +348,42 @@ def email_report(
     return EmailShareResponse(sent=True, recipient=recipient, share_code=analysis.share_code)
 
 
+@router.post("/bulk-email", response_model=BulkEmailResponse)
+def bulk_email(
+    payload: BulkEmailRequest,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> BulkEmailResponse:
+    """Email each report to its own candidate (email auto-detected from that resume)."""
+    results: list[BulkEmailResultItem] = []
+    sent = failed = 0
+    for aid in dict.fromkeys(payload.analysis_ids):  # de-dupe, keep order
+        try:
+            analysis = db.get(Analysis, aid)
+            if not analysis:
+                raise ValueError("Analysis not found")
+            resume = db.get(Resume, analysis.resume_id)
+            if not resume:
+                raise ValueError("Resume not found")
+            # Only the candidate's own email from the resume — never fall back to the admin.
+            recipient = detect_candidate_email(resume, None)
+            if not recipient:
+                raise ValueError("No candidate email found on the resume")
+            if not analysis.share_code:
+                analysis.share_code = "RE-" + secrets.token_hex(4).upper()
+                db.commit()
+            send_report_email(analysis, resume, db.get(User, resume.user_id), recipient)
+            results.append(BulkEmailResultItem(analysis_id=aid, recipient=recipient, sent=True))
+            sent += 1
+        except HTTPException as exc:
+            results.append(BulkEmailResultItem(analysis_id=aid, sent=False, error=str(exc.detail)[:200]))
+            failed += 1
+        except Exception as exc:  # noqa: BLE001
+            results.append(BulkEmailResultItem(analysis_id=aid, sent=False, error=str(exc)[:200]))
+            failed += 1
+    return BulkEmailResponse(results=results, sent_count=sent, failed_count=failed)
+
+
 @router.get("", response_model=list[AnalysisOut])
 def my_analyses(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
@@ -215,4 +395,11 @@ def my_analyses(
     )
     if user.role != "admin":
         stmt = stmt.where(Resume.user_id == user.id)
-    return list(db.scalars(stmt))
+    analyses = list(db.scalars(stmt))
+    # attach a candidate label (name from resume / bulk student id) for the history list
+    for a in analyses:
+        resume = db.get(Resume, a.resume_id)
+        if resume:
+            a.candidate_name = detect_candidate_name(resume)
+            a.candidate_ref = resume.candidate_ref
+    return analyses

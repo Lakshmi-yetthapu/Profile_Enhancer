@@ -5,6 +5,7 @@ from app.models.analysis import Analysis, CriterionResult
 from app.models.job_description import JobDescription
 from app.models.setting import Setting
 from app.models.resume_build import ResumeBuild
+from app.models.bulk_batch import BulkBatch
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "JobDescription",
     "Setting",
     "ResumeBuild",
+    "BulkBatch",
 ]

@@ -1,6 +1,29 @@
+import os
+import re
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_NUMBERED_KEY_LINE = re.compile(r"^\s*MISTRAL_API_KEY_\d+\s*=\s*(.+?)\s*$")
+_NUMBERED_KEY_NAME = re.compile(r"^MISTRAL_API_KEY_\d+$")
+
+
+def _numbered_keys_from_env_file(path: str = ".env") -> list[str]:
+    """Read MISTRAL_API_KEY_1..N from the .env file (pydantic ignores undeclared vars)."""
+    out: list[str] = []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.lstrip().startswith("#"):
+                    continue
+                m = _NUMBERED_KEY_LINE.match(line)
+                if m:
+                    val = m.group(1).strip().strip('"').strip("'").strip()
+                    if val:
+                        out.append(val)
+    except OSError:
+        pass
+    return out
 
 
 class Settings(BaseSettings):
@@ -18,11 +41,27 @@ class Settings(BaseSettings):
     # LLM
     default_llm_provider: str = "mistral"
     mistral_api_key: str = ""
+    mistral_api_keys: str = ""  # optional comma-separated list for key rotation
     mistral_model: str = "mistral-large-latest"
     mistral_embed_model: str = "mistral-embed"
     openai_api_key: str = ""
     openai_model: str = "gpt-5-mini"
     openai_embed_model: str = "text-embedding-3-small"
+
+    @property
+    def mistral_key_list(self) -> list[str]:
+        """All configured Mistral keys, de-duplicated. Supports three formats:
+        MISTRAL_API_KEY (single), MISTRAL_API_KEYS (comma list), and MISTRAL_API_KEY_1..N."""
+        raw = [self.mistral_api_key, *self.mistral_api_keys.split(",")]
+        # numbered keys set as real environment variables
+        raw += [v for name, v in os.environ.items() if _NUMBERED_KEY_NAME.match(name)]
+        # numbered keys from the .env file
+        raw += _numbered_keys_from_env_file()
+        seen: list[str] = []
+        for k in (x.strip() for x in raw):
+            if k and k not in seen:
+                seen.append(k)
+        return seen
 
     # App
     cors_origins: str = "http://localhost:5173"

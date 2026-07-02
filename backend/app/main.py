@@ -13,6 +13,7 @@ from app.routers import admin, analyses, auth, builder, jds, resumes
 _SCHEMA_PATCHES = [
     "ALTER TABLE resumes ADD COLUMN IF NOT EXISTS embedding JSONB",
     "ALTER TABLE resumes ADD COLUMN IF NOT EXISTS ingest_meta JSONB",
+    "ALTER TABLE resumes ADD COLUMN IF NOT EXISTS candidate_ref VARCHAR(120)",
     "ALTER TABLE analyses ADD COLUMN IF NOT EXISTS job_description_id INTEGER",
     "ALTER TABLE analyses ADD COLUMN IF NOT EXISTS jd_fit_score DOUBLE PRECISION",
     "ALTER TABLE analyses ADD COLUMN IF NOT EXISTS confidence DOUBLE PRECISION",
@@ -73,10 +74,11 @@ def public_config() -> dict:
     """Lets the frontend know which providers are usable (key configured)."""
     return {
         "providers": {
-            "mistral": bool(settings.mistral_api_key),
+            "mistral": bool(settings.mistral_key_list),
             "openai": bool(settings.openai_api_key),
         },
         "default_provider": settings.default_llm_provider,
         "max_upload_mb": settings.max_upload_mb,
         "email_enabled": settings.smtp_configured,
+        "mistral_keys": len(settings.mistral_key_list),
     }

@@ -12,6 +12,7 @@ import BuilderPage from "@/pages/BuilderPage";
 import BuildResultPage from "@/pages/BuildResultPage";
 import AdminPage from "@/pages/AdminPage";
 import ScreeningPage from "@/pages/ScreeningPage";
+import BulkAnalysisPage from "@/pages/BulkAnalysisPage";
 import type { ReactNode } from "react";
 
 function Protected({ children, adminOnly }: { children: ReactNode; adminOnly?: boolean }) {
@@ -49,6 +50,14 @@ export default function App() {
           element={
             <Protected adminOnly>
               <ScreeningPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/bulk"
+          element={
+            <Protected adminOnly>
+              <BulkAnalysisPage />
             </Protected>
           }
         />

@@ -29,10 +29,8 @@ export default function AnalyzePage() {
     });
     api.get<JDListItem[]>("/api/jds").then(({ data }) => {
       setSavedJds(data);
-      if (data.length > 0) {
-        setJdSource("existing");
-        setSelectedJdId(data[0].id);
-      }
+      // Default to pasting the JD inline here; a saved JD stays available via the toggle.
+      if (data.length > 0) setSelectedJdId(data[0].id);
     });
   }, []);
 

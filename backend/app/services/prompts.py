@@ -26,6 +26,7 @@ Return a JSON object with EXACTLY this shape:
       "passed": true|false,
       "score": <integer 0-100>,
       "severity": "info|low|medium|high",
+      "statement": "<one-line finding that reflects reality: affirmative if passed, negative if not>",
       "comment": "<concise explanation of the verdict>",
       "evidence": "<short quote from the resume, or null>"
     }
@@ -40,7 +41,7 @@ Return a JSON object with EXACTLY this shape:
       "deployed_url": "<url or null>"
     }
   ],
-  "coding_profiles": [ { "platform": "<e.g. LeetCode>", "url": "<url>" } ],
+  "coding_profiles": [ { "platform": "<LeetCode|CodeChef|HackerRank|Codeforces|GeeksforGeeks>", "url": "<url>" } ],
   "skills_grouped": true|false,
   "skill_sections": { "<section name>": ["skill", ...] },
   "ungrouped_skills": ["skill", ...],
@@ -81,6 +82,10 @@ Return a JSON object with EXACTLY this shape:
 Rules for filling this in:
 - Produce one "criteria" entry for EVERY rubric rule, using its exact "key".
 - "passed" = whether the resume satisfies that rule. "score" reflects how well.
+- "statement" is a short heading describing the ACTUAL finding, not the rule name. Phrase it
+  positively when passed and negatively when failed. Examples:
+  passed -> "Coding profile link is included"; failed -> "No coding profile link found".
+  passed -> "Skills are grouped into sections"; failed -> "Skills are not grouped into sections".
 - PROJECT LINKS — be strict and literal, never assume:
   - IMPORTANT: a GitHub PROFILE link (github.com/<username>, with NO repository after it) is the
     candidate's overall account — put it in "coding_profiles" as platform "GitHub". It is NOT a
@@ -96,6 +101,9 @@ Rules for filling this in:
 - Group skills into sections like Frontend, Backend, Databases, AI/ML, Tools, etc.
   If skills appear as one flat list, set "skills_grouped" to false and list them in "ungrouped_skills".
 - Mark any NxtWave course-completion certificate with "is_nxtwave_course": true.
+- CODING PROFILES are competitive-programming / DSA judges ONLY: LeetCode, CodeChef,
+  HackerRank, Codeforces, GeeksforGeeks, etc. GitHub / GitLab are code hosting, NOT coding
+  profiles — never list GitHub under coding_profiles.
 - quantified_impact: count resume bullet points and how many contain a concrete metric/number.
 - claimed_vs_evidenced_skills.unsubstantiated: skills in the Skills section that never appear
   in any project or work-experience description.

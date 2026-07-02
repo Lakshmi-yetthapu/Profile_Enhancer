@@ -56,11 +56,15 @@ export default function HistoryPage() {
                 </div>
                 <div>
                   <div className="font-medium text-body">
+                    {(a.candidate_ref || a.candidate_name) && (
+                      <span>{a.candidate_ref || a.candidate_name} · </span>
+                    )}
                     <span className={`capitalize ${VERDICT_CLS[a.verdict] ?? ""}`}>{a.verdict}</span>
                     {" · "}
                     {a.mode === "jd" ? "JD match" : "Rubric check"}
                   </div>
                   <div className="text-xs text-muted">
+                    {a.candidate_name && a.candidate_ref ? `${a.candidate_name} · ` : ""}
                     {a.provider} · {new Date(a.created_at).toLocaleString()}
                   </div>
                 </div>

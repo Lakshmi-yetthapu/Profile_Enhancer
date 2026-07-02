@@ -235,6 +235,36 @@ export interface Analysis {
   previous_score?: number | null;
   score_delta?: number | null;
   candidate_email?: string | null;
+  candidate_name?: string | null;
+  candidate_ref?: string | null;
+}
+
+export interface BulkResultItem {
+  external_id: string;
+  resume_link: string;
+  analysis_id: number | null;
+  overall_score: number | null;
+  jd_fit_score: number | null;
+  verdict: string | null;
+  report_path: string | null;
+  error: string | null;
+}
+
+export interface BatchListItem {
+  id: number;
+  title: string;
+  item_count: number;
+  created_at: string;
+}
+
+export interface BatchOut {
+  id: number;
+  title: string;
+  jd_text: string | null;
+  provider: string;
+  item_count: number;
+  results_json: BulkResultItem[];
+  created_at: string;
 }
 
 export interface ScreeningItem {
@@ -273,6 +303,14 @@ export interface AppConfig {
   default_provider: string;
   max_upload_mb: number;
   email_enabled?: boolean;
+  mistral_keys?: number;
+}
+
+export interface BulkEmailResultItem {
+  analysis_id: number;
+  recipient: string | null;
+  sent: boolean;
+  error: string | null;
 }
 
 // ---------- Resume builder ----------
@@ -320,6 +358,7 @@ export interface BuilderInput {
 
 export interface BuildResult {
   personal?: PersonalInfo;
+  headline?: string;
   summary?: string;
   skills?: Record<string, string[]>;
   projects?: {

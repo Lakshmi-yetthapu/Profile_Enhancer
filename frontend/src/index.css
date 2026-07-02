@@ -79,3 +79,21 @@
     color: #111 !important;
   }
 }
+
+/* Resume builder paper: clean, edge-to-edge PDF */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  .resume-paper {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+  .resume-section,
+  .resume-item {
+    break-inside: avoid;
+  }
+}

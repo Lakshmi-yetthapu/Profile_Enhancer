@@ -11,6 +11,9 @@ DEFAULTS: dict[str, str] = {
     "select_threshold": "75",
     "review_threshold": "55",
     "autoreject_hidden_text": "false",
+    # Mistral key rotation
+    "mistral_active_keys": "0",  # 0 = use all configured keys
+    "key_rotation_mode": "round_robin",  # round_robin | failover | single
 }
 
 

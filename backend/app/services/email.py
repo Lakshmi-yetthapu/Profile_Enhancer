@@ -23,6 +23,38 @@ def detect_candidate_email(resume: Resume, fallback: str | None) -> str | None:
     return m.group(0) if m else fallback
 
 
+def display_name_from_email(email: str) -> str:
+    """Turn an email into a friendly name, e.g. 'pramodh.kumar@x.com' -> 'Pramodh Kumar'."""
+    local = (email or "").split("@")[0]
+    cleaned = re.sub(r"[._+-]+", " ", local).strip()
+    return cleaned.title() if cleaned else "there"
+
+
+_NAME_SKIP = {"resume", "curriculum vitae", "cv", "portfolio", "profile"}
+
+
+def detect_candidate_name(resume: Resume) -> str | None:
+    """Pull the candidate's name from the top of the resume (usually the first line)."""
+    for raw in (resume.extracted_text or "").splitlines()[:8]:
+        line = raw.strip().strip("|•-–").strip()
+        if not line:
+            continue
+        low = line.lower()
+        if "@" in line or "http" in low or any(ch.isdigit() for ch in line):
+            continue
+        if low in _NAME_SKIP or low.startswith(("resume", "curriculum")):
+            continue
+        words = line.split()
+        if not (2 <= len(words) <= 4) or len(line) > 40:
+            continue
+        if not re.fullmatch(r"[A-Za-z .'-]+", line):
+            continue
+        # most words should be capitalized (name-like)
+        if sum(1 for w in words if w[:1].isupper()) >= len(words) - 1:
+            return line.title() if line.isupper() else line
+    return None
+
+
 def _verdict_label(verdict: str) -> str:
     return {"select": "Shortlisted", "review": "Under review", "reject": "Not selected"}.get(
         verdict, verdict.title()
@@ -31,7 +63,8 @@ def _verdict_label(verdict: str) -> str:
 
 def _build_message(analysis: Analysis, resume: Resume, candidate: User, recipient: str) -> EmailMessage:
     r = analysis.result_json or {}
-    name = candidate.full_name or candidate.email.split("@")[0]
+    # Prefer the name printed on the resume; fall back to the email's username.
+    name = detect_candidate_name(resume) or display_name_from_email(recipient)
     score = round(analysis.overall_score)
     verdict = _verdict_label(analysis.verdict)
     code = analysis.share_code or f"RE-{analysis.id}"

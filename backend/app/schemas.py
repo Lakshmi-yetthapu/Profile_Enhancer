@@ -182,6 +182,8 @@ class AnalysisOut(BaseModel):
     previous_score: float | None = None
     score_delta: float | None = None
     candidate_email: str | None = None
+    candidate_name: str | None = None
+    candidate_ref: str | None = None
     model_config = {"from_attributes": True}
 
 
@@ -202,6 +204,72 @@ class ScreeningItem(BaseModel):
 class ReviewUpdate(BaseModel):
     status: Literal["pending", "shortlisted", "rejected", "review"] | None = None
     recruiter_notes: str | None = None
+
+
+# ---------- Bulk analysis ----------
+
+
+class BulkItemIn(BaseModel):
+    external_id: str
+    resume_link: str
+
+
+class BulkRequest(BaseModel):
+    jd_text: str | None = None
+    provider: Literal["mistral", "openai"] | None = None
+    items: list[BulkItemIn]
+
+
+class BulkResultItem(BaseModel):
+    external_id: str
+    resume_link: str
+    analysis_id: int | None = None
+    overall_score: float | None = None
+    jd_fit_score: float | None = None
+    verdict: str | None = None
+    report_path: str | None = None
+    error: str | None = None
+
+
+class BulkResponse(BaseModel):
+    batch_id: int | None = None
+    results: list[BulkResultItem]
+
+
+class BulkEmailRequest(BaseModel):
+    analysis_ids: list[int]
+
+
+class BulkEmailResultItem(BaseModel):
+    analysis_id: int
+    recipient: str | None = None
+    sent: bool = False
+    error: str | None = None
+
+
+class BulkEmailResponse(BaseModel):
+    results: list[BulkEmailResultItem]
+    sent_count: int
+    failed_count: int
+
+
+class BatchListItem(BaseModel):
+    id: int
+    title: str
+    item_count: int
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class BatchOut(BaseModel):
+    id: int
+    title: str
+    jd_text: str | None
+    provider: str
+    item_count: int
+    results_json: list[Any]
+    created_at: datetime
+    model_config = {"from_attributes": True}
 
 
 class EmailShareRequest(BaseModel):

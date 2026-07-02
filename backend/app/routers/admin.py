@@ -23,7 +23,11 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.get("/settings")
 def get_settings(db: Session = Depends(get_db), _: User = Depends(require_admin)) -> dict:
-    return appsettings.all_settings(db)
+    from app.config import settings as app_settings
+
+    data = appsettings.all_settings(db)
+    data["mistral_keys_loaded"] = str(len(app_settings.mistral_key_list))  # read-only info
+    return data
 
 
 @router.put("/settings")

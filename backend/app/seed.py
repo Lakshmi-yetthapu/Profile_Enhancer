@@ -68,18 +68,8 @@ DEFAULT_CRITERIA: list[dict] = [
         "weight": 1.0,
         "is_critical": False,
     },
-    {
-        "key": "relevant_certifications",
-        "category": "do",
-        "title": "Relevant certifications (excluding NxtWave course certs)",
-        "description": (
-            "The resume should include certifications relevant to the candidate's skills. "
-            "NxtWave course-completion certificates are NOT counted. Fail if there are no "
-            "relevant external certifications."
-        ),
-        "weight": 1.0,
-        "is_critical": False,
-    },
+    # Note: certifications are handled as a coaching suggestion (internal NxtWave certs are
+    # allowed; an external cert is encouraged), not a pass/fail rubric rule.
 ]
 
 BANNED_PROJECTS: list[str] = [
