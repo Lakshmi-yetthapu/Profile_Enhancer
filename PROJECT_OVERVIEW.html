@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ResumeEnhancer — Project Overview</title></head><body>
+<style>
+  :root {
+    --ink: #0f131a;
+    --surface: #161b24;
+    --surface-2: #1d232f;
+    --line: #2a3342;
+    --line-soft: #212936;
+    --text: #e7eaf0;
+    --muted: #98a3b4;
+    --faint: #6b7686;
+    --teal: #6aa79d;
+    --teal-deep: #3d7a72;
+    --sand: #c9aa6c;
+    --good: #6fae8f;
+    --warn: #c9a25f;
+    --bad: #bd7373;
+    --maxw: 1080px;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    background-image:
+      radial-gradient(900px 480px at 82% -8%, rgba(106, 167, 157, 0.10), transparent),
+      radial-gradient(760px 420px at -5% 2%, rgba(201, 170, 108, 0.06), transparent);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+
+  a { color: var(--teal); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 4px; }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* ---- top nav ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(15, 19, 26, 0.82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .wrap { display: flex; align-items: center; gap: 20px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 18px; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(150deg, rgba(106,167,157,0.22), rgba(201,170,108,0.14));
+    border: 1px solid var(--line); color: var(--teal); font-size: 16px;
+  }
+  .navlinks { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+  .navlinks a {
+    color: var(--muted); font-size: 13px; padding: 6px 10px; border-radius: 8px;
+    font-family: var(--sans);
+  }
+  .navlinks a:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+  @media (max-width: 820px) { .navlinks { display: none; } }
+
+  /* ---- hero ---- */
+  .hero { padding: 72px 0 40px; border-bottom: 1px solid var(--line-soft); }
+  .eyebrow {
+    font-family: var(--sans); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--teal); font-weight: 600;
+  }
+  .hero h1 { font-size: clamp(34px, 5.4vw, 56px); line-height: 1.05; margin: 16px 0 0; }
+  .hero .lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 62ch; margin: 20px 0 0; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--sans); font-size: 12.5px; color: var(--muted);
+    border: 1px solid var(--line); background: var(--surface-2);
+    padding: 5px 11px; border-radius: 999px;
+  }
+  .pill.accent { color: var(--teal); border-color: rgba(106,167,157,0.4); background: rgba(106,167,157,0.08); }
+
+  /* ---- sections ---- */
+  section { padding: 56px 0; border-bottom: 1px solid var(--line-soft); }
+  .sec-head { max-width: 66ch; margin-bottom: 30px; }
+  .sec-head .eyebrow { display: block; margin-bottom: 10px; }
+  .sec-head h2 { font-size: clamp(26px, 3.4vw, 34px); }
+  .sec-head p { color: var(--muted); margin: 12px 0 0; }
+
+  /* ---- pillars ---- */
+  .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 780px) { .pillars { grid-template-columns: 1fr; } }
+  .pillar {
+    border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+    background: linear-gradient(180deg, var(--surface), rgba(22,27,36,0.6));
+  }
+  .pillar .num { font-family: var(--mono); font-size: 12px; color: var(--sand); letter-spacing: 0.1em; }
+  .pillar h3 { font-size: 20px; margin: 8px 0 6px; }
+  .pillar p { color: var(--muted); font-size: 14.5px; margin: 0; }
+
+  /* ---- feature grid ---- */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .grid.two { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px) { .grid, .grid.two { grid-template-columns: 1fr; } }
+
+  .card {
+    border: 1px solid var(--line); border-radius: 14px; padding: 18px;
+    background: var(--surface); display: flex; flex-direction: column; gap: 6px;
+  }
+  .card .kicker {
+    font-family: var(--sans); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--sand); font-weight: 600;
+  }
+  .card h3 { font-family: var(--sans); font-weight: 650; font-size: 15.5px; letter-spacing: 0; }
+  .card p { color: var(--muted); font-size: 13.5px; margin: 0; }
+  .card ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+  .card li { margin: 2px 0; }
+
+  .group-label {
+    font-family: var(--sans); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600; margin: 26px 0 12px;
+  }
+  .group-label:first-of-type { margin-top: 0; }
+
+  /* ---- pipeline ---- */
+  .pipe { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+  .step {
+    flex: 1 1 150px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    background: var(--surface); position: relative;
+  }
+  .step .s-num { font-family: var(--mono); font-size: 11px; color: var(--teal); }
+  .step h4 { font-family: var(--sans); font-size: 14px; margin: 4px 0 4px; }
+  .step p { color: var(--muted); font-size: 12.5px; margin: 0; }
+
+  /* ---- table ---- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+  tr:last-child td { border-bottom: none; }
+  td .rule { font-weight: 600; color: var(--text); }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-family: var(--sans); }
+  .tag.crit { color: var(--bad); border: 1px solid rgba(189,115,115,0.4); background: rgba(189,115,115,0.1); }
+  .tag.std { color: var(--muted); border: 1px solid var(--line); }
+
+  .verdict { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+  .v { font-size: 12.5px; padding: 4px 12px; border-radius: 999px; font-family: var(--sans); font-weight: 600; }
+  .v.sel { color: var(--good); background: rgba(111,174,143,0.12); border: 1px solid rgba(111,174,143,0.4); }
+  .v.rev { color: var(--warn); background: rgba(201,162,95,0.12); border: 1px solid rgba(201,162,95,0.4); }
+  .v.rej { color: var(--bad); background: rgba(189,115,115,0.12); border: 1px solid rgba(189,115,115,0.4); }
+
+  /* ---- stack / two-col ---- */
+  .cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+  .stack-card { border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: var(--surface); }
+  .stack-card h3 { font-family: var(--sans); font-size: 15px; font-weight: 650; margin-bottom: 10px; }
+  .kv { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); font-size: 14px; }
+  .kv:last-child { border-bottom: none; }
+  .kv .k { color: var(--muted); min-width: 110px; }
+  .kv .val { color: var(--text); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { font-size: 12.5px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font-family: var(--sans); }
+
+  /* ---- roles ---- */
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .role-grid { grid-template-columns: 1fr; } }
+  .role { border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: var(--surface); }
+  .role h3 { font-family: var(--sans); font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .role .dot { width: 8px; height: 8px; border-radius: 999px; }
+  .role ul { padding-left: 18px; color: var(--muted); font-size: 14px; margin: 12px 0 0; }
+  .role li { margin: 4px 0; }
+
+  /* ---- code ---- */
+  pre {
+    background: #0b0e14; border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px; overflow-x: auto; font-family: var(--mono); font-size: 13px;
+    color: #cdd6e4; line-height: 1.6; margin: 0;
+  }
+  pre .c { color: var(--faint); }
+  pre .k { color: var(--teal); }
+
+  .note { border-left: 3px solid var(--sand); background: rgba(201,170,108,0.06); padding: 12px 16px; border-radius: 0 10px 10px 0; color: var(--muted); font-size: 14px; margin-top: 18px; }
+
+  footer { padding: 40px 0 60px; color: var(--faint); font-size: 13px; }
+  .lead-in { color: var(--muted); max-width: 68ch; margin: 0 0 24px; }
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="mark">◈</span> ResumeEnhancer</div>
+    <nav class="navlinks">
+      <a href="#overview">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#rubric">Rubric</a>
+      <a href="#pipeline">How it works</a>
+      <a href="#stack">Tech</a>
+      <a href="#roles">Roles</a>
+      <a href="#setup">Setup</a>
+      <a href="#roadmap">Roadmap</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">NxtWave · Internal Platform</span>
+    <h1>AI resume evaluation, screening &amp; building — in one place.</h1>
+    <p class="lede">
+      ResumeEnhancer lets students test and improve their resumes against NxtWave's evaluation
+      rubric, lets admins screen candidates individually or in bulk with deep authenticity checks,
+      and generates ATS-friendly resumes tailored to any job description — powered by Mistral and
+      OpenAI with automatic key rotation.
+    </p>
+    <div class="hero-meta">
+      <span class="pill accent">React + Vite</span>
+      <span class="pill accent">FastAPI</span>
+      <span class="pill accent">PostgreSQL</span>
+      <span class="pill">Mistral · OpenAI</span>
+      <span class="pill">JWT auth · Student &amp; Admin</span>
+      <span class="pill">Semantic embeddings</span>
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Overview</span>
+      <h2>Three products, one platform</h2>
+      <p>Everything is organized around what people actually do: improve a resume, screen candidates, or build a new resume from scratch.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="num">01 — STUDENT</div>
+        <h3>Analyze &amp; improve</h3>
+        <p>Upload a resume (file, Drive link, or URL), score it against the rubric or a job description, and get a clear feedback report with prioritized fixes.</p>
+      </div>
+      <div class="pillar">
+        <div class="num">02 — ADMIN</div>
+        <h3>Screen at scale</h3>
+        <p>Evaluate one resume or a whole cohort pasted from a sheet, with authenticity checks, plagiarism detection, a recruiter queue, CSV export, and email delivery.</p>
+      </div>
+      <div class="pillar">
+        <div class="num">03 — BUILDER</div>
+        <h3>Build ATS resumes</h3>
+        <p>Enter details plus a target JD; the AI writes ATS-optimized, achievement-focused content and renders a clean, downloadable resume — never fabricating facts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Capabilities</span>
+      <h2>What the platform does</h2>
+      <p>A complete feature catalog, grouped by area.</p>
+    </div>
+
+    <div class="group-label">Resume intake &amp; analysis</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">Ingestion</span>
+        <h3>Any resume source</h3>
+        <p>PDF/DOCX upload, Google Drive share links, or external URLs — all converted to clean text. Real hyperlink URLs are extracted from the file (not just visible text).</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Two modes</span>
+        <h3>Rubric &amp; JD analysis</h3>
+        <p>Score against NxtWave's rubric with no JD, or match against a specific job description for role-fit scoring — both in one flow.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Report</span>
+        <h3>Actionable feedback</h3>
+        <p>Score gauge, verdict, per-rule breakdown with evidence, strengths, prioritized improvements, and a print-to-PDF export.</p>
+      </div>
+    </div>
+
+    <div class="group-label">Authenticity &amp; anti-gaming</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">Links</span>
+        <h3>Live-link verification</h3>
+        <p>Every GitHub and deployed link is fetched to confirm it actually resolves — not just that a link is present.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">GitHub</span>
+        <h3>Repo authenticity</h3>
+        <p>Each project repo is checked for existence, fork status, stars, and recency. Forks are flagged and don't count as self-made.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Integrity</span>
+        <h3>Plagiarism &amp; stuffing</h3>
+        <p>Cross-resume duplicate detection via embeddings, plus hidden/white-text keyword-stuffing detection and photo/format flags.</p>
+      </div>
+    </div>
+
+    <div class="group-label">Skill &amp; coding signals</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">LeetCode</span>
+        <h3>Problem-solving check</h3>
+        <p>Live LeetCode stats — problems solved &amp; consistency. Below 100 solved or inconsistent practice raises a specific coaching point.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">GitHub</span>
+        <h3>Activity profile</h3>
+        <p>Original vs forked repos, stars, languages, followers. Too few original projects prompts a "build more projects" suggestion.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Skills</span>
+        <h3>Claimed vs evidenced</h3>
+        <p>Flags skills listed but never backed by a project or experience, and checks skills are grouped into clear sections.</p>
+      </div>
+    </div>
+
+    <div class="group-label">Content quality</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">Impact</span>
+        <h3>Quantified achievements</h3>
+        <p>Measures how many bullets carry real metrics, and rates writing quality (weak phrases, grammar, action verbs).</p>
+      </div>
+      <div class="card">
+        <span class="kicker">ATS</span>
+        <h3>ATS-readiness &amp; AI check</h3>
+        <p>Contact-info completeness, formatting/ATS concerns, page count, and an AI-generated / templated likelihood signal.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Trust</span>
+        <h3>Confidence score</h3>
+        <p>Every analysis reports how confident the model is, so borderline cases can be routed to human review.</p>
+      </div>
+    </div>
+
+    <div class="group-label">JD matching</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">Semantic</span>
+        <h3>Skill match matrix</h3>
+        <p>Embedding-based matching classifies each JD skill as have / partial / missing — catching synonyms like "ReactJS" ≈ "React.js".</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Scoring</span>
+        <h3>Fit dimensions</h3>
+        <p>Overall fit score plus per-dimension breakdown (must-have skills, experience, keywords, education, responsibilities).</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Tailoring</span>
+        <h3>Rewrites &amp; ranking</h3>
+        <p>Suggested bullet rewrites, ATS keywords to add, and ranking of multiple resumes against one saved JD.</p>
+      </div>
+    </div>
+
+    <div class="group-label">Admin screening &amp; workflow</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">Bulk</span>
+        <h3>Cohort analysis</h3>
+        <p>Paste two columns from a sheet — Student ID + resume link — and get an individual report per student, plus a downloadable results CSV. Last 5 batches saved.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Queue</span>
+        <h3>Recruiter workflow</h3>
+        <p>Shortlist / reject / review buckets, notes, cohort percentile, re-score delta, configurable pass thresholds, and CSV export.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Email</span>
+        <h3>Deliver reports</h3>
+        <p>Email each candidate their own report (recipient auto-detected from the resume) with a unique reference ID — individually or the whole batch.</p>
+      </div>
+    </div>
+
+    <div class="group-label">AI engine, fairness &amp; builder</div>
+    <div class="grid">
+      <div class="card">
+        <span class="kicker">Providers</span>
+        <h3>Mistral · OpenAI + rotation</h3>
+        <p>Choose the engine per run. Multiple Mistral keys with round-robin / failover / single modes and automatic retry on rate limits.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Fairness</span>
+        <h3>Bias-safe mode</h3>
+        <p>Optionally redact name, contact details, and gendered terms before scoring — link/GitHub checks still run on the original.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">Builder</span>
+        <h3>ATS resume generator</h3>
+        <p>JD-tailored content, three templates + accent colors, a role headline, ATS score &amp; keyword report, copy-as-text, and PDF export.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="rubric">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Evaluation rubric</span>
+      <h2>The rules that decide select or reject</h2>
+      <p>Admin-editable rules stored in the database. Critical rules force a reject; others contribute a weighted score. Findings are phrased dynamically to reflect what's actually present.</p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Rule</th><th>What it checks</th><th>Type</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rule">No NxtWave internal projects</span></td>
+            <td>Projects must be self-made; the ~45 NxtWave portal projects are matched against a block-list.</td>
+            <td><span class="tag crit">Critical</span></td>
+          </tr>
+          <tr>
+            <td><span class="rule">GitHub + deployed link per project</span></td>
+            <td>Every project needs both a real repository link and a live/deployed link (grounded on actual URLs).</td>
+            <td><span class="tag std">Weighted</span></td>
+          </tr>
+          <tr>
+            <td><span class="rule">No NxtWave training as experience</span></td>
+            <td>The experience section must not list NxtWave training as professional experience.</td>
+            <td><span class="tag crit">Critical</span></td>
+          </tr>
+          <tr>
+            <td><span class="rule">Coding profile present</span></td>
+            <td>A competitive-programming profile (LeetCode / CodeChef / HackerRank …) must be included; GitHub doesn't count.</td>
+            <td><span class="tag std">Weighted</span></td>
+          </tr>
+          <tr>
+            <td><span class="rule">Skills grouped into sections</span></td>
+            <td>Skills organized into Frontend / Backend / Databases / AI — not a flat, uncategorized list.</td>
+            <td><span class="tag std">Weighted</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px; color:var(--muted); font-size:14px;">
+      Certifications are handled as coaching (internal NxtWave certs are allowed; an external certification is encouraged),
+      and a minimum of two projects is nudged when fewer are found. Outcomes surface as:
+    </p>
+    <div class="verdict" style="margin-top:12px;">
+      <span class="v sel">Selected</span>
+      <span class="v rev">Needs review</span>
+      <span class="v rej">Rejected</span>
+    </div>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">How it works</span>
+      <h2>From a resume link to a decision</h2>
+      <p>Each analysis runs a hybrid pipeline: deterministic checks ground the facts, the LLM judges quality, and embeddings handle semantics.</p>
+    </div>
+    <div class="pipe">
+      <div class="step"><div class="s-num">01</div><h4>Ingest</h4><p>Fetch &amp; parse the resume; extract text + real hyperlinks; flag hidden text.</p></div>
+      <div class="step"><div class="s-num">02</div><h4>Analyze</h4><p>LLM scores every rubric rule and writes findings, strengths &amp; fixes.</p></div>
+      <div class="step"><div class="s-num">03</div><h4>Verify</h4><p>Deterministic checks: banned projects, live links, GitHub repos, plagiarism.</p></div>
+      <div class="step"><div class="s-num">04</div><h4>Enrich</h4><p>LeetCode &amp; GitHub stats; semantic JD skill matrix; confidence.</p></div>
+      <div class="step"><div class="s-num">05</div><h4>Decide</h4><p>Weighted score + thresholds → Selected / Review / Rejected, saved as JSON.</p></div>
+    </div>
+    <div class="note">
+      Reports are stored as structured JSON in PostgreSQL (not as files) and rendered live — so the same
+      analysis powers the web report, the PDF export, the email, and the screening CSV.
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Under the hood</span>
+      <h2>Technology &amp; data model</h2>
+    </div>
+    <div class="cols">
+      <div class="stack-card">
+        <h3>Stack</h3>
+        <div class="kv"><span class="k">Frontend</span><span class="val">React, Vite, TypeScript, TailwindCSS, Framer Motion</span></div>
+        <div class="kv"><span class="k">Backend</span><span class="val">Python, FastAPI, SQLAlchemy 2.0, Pydantic</span></div>
+        <div class="kv"><span class="k">Database</span><span class="val">PostgreSQL (JSONB for reports &amp; embeddings)</span></div>
+        <div class="kv"><span class="k">AI</span><span class="val">Mistral large + OpenAI, chat &amp; embeddings</span></div>
+        <div class="kv"><span class="k">Parsing</span><span class="val">pdfplumber, python-docx, BeautifulSoup, httpx</span></div>
+        <div class="kv"><span class="k">Integrations</span><span class="val">LeetCode API, GitHub API, SMTP email</span></div>
+        <div class="kv"><span class="k">Auth</span><span class="val">JWT (access + refresh), bcrypt</span></div>
+      </div>
+      <div class="stack-card">
+        <h3>Core data model</h3>
+        <div class="chips">
+          <span class="chip">users</span>
+          <span class="chip">criteria</span>
+          <span class="chip">banned_projects</span>
+          <span class="chip">resumes</span>
+          <span class="chip">analyses</span>
+          <span class="chip">criterion_results</span>
+          <span class="chip">job_descriptions</span>
+          <span class="chip">resume_builds</span>
+          <span class="chip">bulk_batches</span>
+          <span class="chip">settings</span>
+        </div>
+        <p style="color:var(--muted); font-size:13.5px; margin-top:14px;">
+          Analyses store the full report in a <code>result_json</code> JSONB column plus a queryable
+          per-rule breakdown. Resumes cache extracted text, embeddings (for ranking &amp; plagiarism),
+          and ingestion metadata.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roles">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Access</span>
+      <h2>Who can do what</h2>
+    </div>
+    <div class="role-grid">
+      <div class="role">
+        <h3><span class="dot" style="background:var(--teal)"></span> Student</h3>
+        <ul>
+          <li>Register / sign in</li>
+          <li>Upload or link a resume</li>
+          <li>Run rubric or JD-based analysis</li>
+          <li>View reports &amp; download PDF</li>
+          <li>Build an ATS resume with the builder</li>
+          <li>See their own analysis history</li>
+        </ul>
+      </div>
+      <div class="role">
+        <h3><span class="dot" style="background:var(--sand)"></span> Admin</h3>
+        <ul>
+          <li>Everything a student can do</li>
+          <li>Bulk analysis from a sheet + CSV export</li>
+          <li>Screening queue: shortlist / reject / notes</li>
+          <li>Email reports to candidates (single or batch)</li>
+          <li>Edit rubric rules, banned projects &amp; thresholds</li>
+          <li>Configure Mistral key rotation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Running it</span>
+      <h2>Local setup</h2>
+      <p>Configuration and secrets live in <code>backend/.env</code> (git-ignored); the frontend only learns which providers are available, never the keys.</p>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="group-label" style="margin-top:0;">Backend</div>
+<pre><span class="c"># create db, then:</span>
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+<span class="c"># configure .env (DB, API keys, SMTP)</span>
+uvicorn app.main:app --reload --port 8000</pre>
+      </div>
+      <div>
+        <div class="group-label" style="margin-top:0;">Frontend</div>
+<pre>cd frontend
+npm install
+npm run dev
+<span class="c"># open http://localhost:5173</span></pre>
+        <p style="color:var(--muted); font-size:13.5px; margin-top:14px;">
+          Tables and the default rubric, banned-projects list, and admin user are created automatically
+          on first startup. API docs at <code>/docs</code>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">What's next</span>
+      <h2>Roadmap</h2>
+      <p>Natural extensions, none blocking today's use.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>Background bulk jobs</h3><p>Run large cohorts asynchronously with a live progress bar instead of a single long request.</p></div>
+      <div class="card"><h3>Public report links</h3><p>Shareable, read-only report pages for candidates using the existing reference code.</p></div>
+      <div class="card"><h3>Prefill builder from a resume</h3><p>Parse an uploaded resume to populate the builder form, then enhance.</p></div>
+      <div class="card"><h3>Alembic migrations</h3><p>Move from auto-create to versioned migrations for production deploys.</p></div>
+      <div class="card"><h3>Edit &amp; regenerate</h3><p>Tweak a bullet in a built resume and re-run just that section.</p></div>
+      <div class="card"><h3>Analytics dashboard</h3><p>Cohort-level trends: score distributions, common gaps, pass rates over time.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    ResumeEnhancer · Internal platform overview · Prepared for team review.
+  </div>
+</footer>
+</body></html>
