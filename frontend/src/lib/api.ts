@@ -1,6 +1,6 @@
 import axios from "axios";
-
-const api = axios.create({ baseURL: "/" });
+// import.meta.env typing may not be available in some TS configs; cast to any to avoid errors
+const api = axios.create({ baseURL: (import.meta as any).env.VITE_API_URL });
 
 const ACCESS_KEY = "re_access";
 const REFRESH_KEY = "re_refresh";
