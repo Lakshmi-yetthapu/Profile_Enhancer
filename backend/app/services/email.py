@@ -1,13 +1,19 @@
-"""Send a candidate their resume evaluation report over SMTP (stdlib only)."""
+"""Send a candidate their resume evaluation report.
+
+Transport is chosen automatically: the Resend HTTP API (works on hosts that block SMTP,
+e.g. Render) when RESEND_API_KEY is set, otherwise SMTP for local development.
+"""
 
 from __future__ import annotations
 
+import base64
 import os
 import re
 import smtplib
 import ssl
 from email.message import EmailMessage
 
+import httpx
 from fastapi import HTTPException
 
 from app.config import settings
@@ -61,7 +67,19 @@ def _verdict_label(verdict: str) -> str:
     )
 
 
-def _build_message(analysis: Analysis, resume: Resume, candidate: User, recipient: str) -> EmailMessage:
+def _resume_attachment(resume: Resume) -> tuple[str, bytes] | None:
+    """(filename, bytes) for a locally-stored PDF/DOCX upload, else None.
+    On ephemeral hosts the file may be gone — that's fine, we just skip it."""
+    if resume.source_type == "pdf" and resume.source_ref and os.path.exists(resume.source_ref):
+        try:
+            with open(resume.source_ref, "rb") as f:
+                return (resume.original_filename or os.path.basename(resume.source_ref)), f.read()
+        except OSError:
+            return None
+    return None
+
+
+def _build_parts(analysis: Analysis, resume: Resume, recipient: str) -> dict:
     r = analysis.result_json or {}
     # Prefer the name printed on the resume; fall back to the email's username.
     name = detect_candidate_name(resume) or display_name_from_email(recipient)
@@ -107,36 +125,50 @@ def _build_message(analysis: Analysis, resume: Resume, candidate: User, recipien
   <p style="color:#6b7280;font-size:13px">Regards,<br/>NxtWave Evaluation Team</p>
 </div>
 """
+    return {
+        "subject": f"Your Resume Evaluation Report [{code}]",
+        "html": html,
+        "text": text,
+        "attachment": _resume_attachment(resume),
+    }
 
+
+def _send_via_resend(parts: dict, recipient: str) -> None:
+    payload: dict = {
+        "from": settings.resend_from,
+        "to": [recipient],
+        "subject": parts["subject"],
+        "html": parts["html"],
+        "text": parts["text"],
+    }
+    if parts["attachment"]:
+        filename, data = parts["attachment"]
+        payload["attachments"] = [
+            {"filename": filename, "content": base64.b64encode(data).decode("ascii")}
+        ]
+    try:
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+            json=payload,
+            timeout=20,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to send email: {exc}") from exc
+    if resp.status_code >= 300:
+        raise HTTPException(status_code=502, detail=f"Resend error: {resp.text[:300]}")
+
+
+def _send_via_smtp(parts: dict, recipient: str) -> None:
     msg = EmailMessage()
-    msg["Subject"] = f"Your Resume Evaluation Report [{code}]"
+    msg["Subject"] = parts["subject"]
     msg["From"] = settings.smtp_sender
     msg["To"] = recipient
-    msg.set_content(text)
-    msg.add_alternative(html, subtype="html")
-
-    # Attach the resume file for PDF/DOCX uploads (link-based resumes are referenced in the body).
-    if resume.source_type == "pdf" and resume.source_ref and os.path.exists(resume.source_ref):
-        try:
-            with open(resume.source_ref, "rb") as f:
-                data = f.read()
-            filename = resume.original_filename or os.path.basename(resume.source_ref)
-            msg.add_attachment(data, maintype="application", subtype="octet-stream", filename=filename)
-        except OSError:
-            pass
-
-    return msg
-
-
-def send_report_email(analysis: Analysis, resume: Resume, candidate: User, recipient: str) -> None:
-    print(candidate.email)
-    print(f"Sending report email to {recipient} for analysis {analysis.id}...")
-    if not settings.smtp_configured:
-        raise HTTPException(
-            status_code=400,
-            detail="Email is not configured. Set SMTP_HOST / SMTP_USER / SMTP_PASSWORD in .env.",
-        )
-    msg = _build_message(analysis, resume, candidate, recipient)
+    msg.set_content(parts["text"])
+    msg.add_alternative(parts["html"], subtype="html")
+    if parts["attachment"]:
+        filename, data = parts["attachment"]
+        msg.add_attachment(data, maintype="application", subtype="octet-stream", filename=filename)
     try:
         if settings.smtp_port == 465:
             context = ssl.create_default_context()
@@ -151,3 +183,16 @@ def send_report_email(analysis: Analysis, resume: Resume, candidate: User, recip
                 server.send_message(msg)
     except (smtplib.SMTPException, OSError) as exc:
         raise HTTPException(status_code=502, detail=f"Failed to send email: {exc}") from exc
+
+
+def send_report_email(analysis: Analysis, resume: Resume, candidate: User, recipient: str) -> None:
+    if not settings.email_configured:
+        raise HTTPException(
+            status_code=400,
+            detail="Email is not configured. Set RESEND_API_KEY (recommended) or SMTP_* in the environment.",
+        )
+    parts = _build_parts(analysis, resume, recipient)
+    if settings.resend_api_key:
+        _send_via_resend(parts, recipient)
+    else:
+        _send_via_smtp(parts, recipient)

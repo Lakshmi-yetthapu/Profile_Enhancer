@@ -79,6 +79,6 @@ def public_config() -> dict:
         },
         "default_provider": settings.default_llm_provider,
         "max_upload_mb": settings.max_upload_mb,
-        "email_enabled": settings.smtp_configured,
+        "email_enabled": settings.email_configured,
         "mistral_keys": len(settings.mistral_key_list),
     }

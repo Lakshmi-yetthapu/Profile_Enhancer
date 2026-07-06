@@ -73,7 +73,11 @@ class Settings(BaseSettings):
     enable_link_checks: bool = True
     plagiarism_threshold: float = 0.95
 
-    # Email (SMTP) for sharing reports with candidates
+    # Email for sharing reports with candidates.
+    # Preferred on hosts that block SMTP (e.g. Render): Resend HTTP API over HTTPS.
+    resend_api_key: str = ""
+    resend_from: str = "onboarding@resend.dev"  # verified domain sender, or Resend's test sender
+    # SMTP fallback (works locally; blocked on many cloud hosts)
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
@@ -88,7 +92,12 @@ class Settings(BaseSettings):
 
     @property
     def smtp_sender(self) -> str:
-        return self.smtp_from or self.smtp_user  # cosine above which two resumes are near-duplicates
+        return self.smtp_from or self.smtp_user
+
+    @property
+    def email_configured(self) -> bool:
+        """Email works if either Resend (HTTP) or SMTP is configured."""
+        return bool(self.resend_api_key) or self.smtp_configured  # cosine above which two resumes are near-duplicates
 
     admin_email: str = "admin@nxtwave.local"
     admin_password: str = "ChangeMe123!"
